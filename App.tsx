@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Calendar } from 'react-native-big-calendar';
 import { Modal, TouchableOpacity, Text, View, StyleSheet, Button, TextInput } from 'react-native';
-import axios from 'axios';
 
 // Initial events data
 const initialEvents = [
@@ -18,38 +17,41 @@ const initialEvents = [
   },
 ];
 
-const CalendarWrapper = ({ events, onSwipeEnd, onPressCell }) => {
+const CalendarWrapper = ({ events, onSwipeEnd, onLongPressCell, onPressCell }) => {
   return (
-    <Calendar
-      events={events}
-      onSwipeEnd={onSwipeEnd}
-      onPressCell={onPressCell}
-      height={400}
-      renderEvent={(event, touchableOpacityProps) => (
-        <TouchableOpacity {...touchableOpacityProps}>
-          <Text style={{ fontSize: 10, color: 'red' }}>{event.title}</Text>
-        </TouchableOpacity>
-      )}
-      headerContentStyle={{ backgroundColor: 'yellow' }}
-      mode="month"
-      locale="en"
-      showTime={true}
-      weekStartsOn={0}
-      weekEndsOn={6}
-      ampm={true}
-      scrollOffsetMinutes={480}
-      swipeEnabled={true}
-      showAdjacentMonths={true}
-      sortedMonthView={true}
-      overlapOffset={20}
-      moreLabel="View More"
-      showVerticalScrollIndicator={true}
-      eventMinHeightForMonthView={10}
-      eventCellStyle={(event) => ({
-        backgroundColor: event.title === 'Meeting' ? 'green' : 'blue',
-        borderRadius: 5,
-      })}
-    />
+    <View>
+      <Calendar
+        events={events}
+        onSwipeEnd={onSwipeEnd}
+        onLongPressCell={onLongPressCell}
+        onPressCell={onPressCell} // Added onPressDateHeader callback
+        height={900}
+        renderEvent={(event, touchableOpacityProps) => (
+          <TouchableOpacity {...touchableOpacityProps}>
+            <Text style={{ fontSize: 10, color: 'red' }}>{event.title}</Text>
+          </TouchableOpacity>
+        )}
+        headerContentStyle={{ backgroundColor: 'yellow' }}
+        mode="month"
+        locale="en"
+        showTime={true}
+        weekStartsOn={0}
+        weekEndsOn={6}
+        ampm={true}
+        scrollOffsetMinutes={480}
+        swipeEnabled={true}
+        showAdjacentMonths={true}
+        sortedMonthView={true}
+        overlapOffset={20}
+        moreLabel="View More"
+        showVerticalScrollIndicator={true}
+        eventMinHeightForMonthView={10}
+        eventCellStyle={(event) => ({
+          backgroundColor: event.title === 'Meeting' ? 'green' : 'blue',
+          borderRadius: 5,
+        })}
+      />
+    </View>
   );
 };
 
@@ -59,6 +61,8 @@ const MyCalendar = () => {
   const [key, setKey] = useState(0); // Use a key to force re-render
   const [modalVisible, setModalVisible] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
+  const [selectedDateEvents, setSelectedDateEvents] = useState([]);
+  const [clickedDate, setClickedDate] = useState(null); // New state to store clicked date
 
   const formatMonthYear = useCallback((date) => {
     const options = { year: 'numeric', month: 'long' };
@@ -74,49 +78,68 @@ const MyCalendar = () => {
     setKey((prevKey) => prevKey + 1); // Increment the key to force rerender
   }, []);
 
-  const handlePressCell = useCallback((date) => {
+  const handleLongPressCell = useCallback((date) => {
     // Open modal for new event details
     setModalVisible(true);
+    // Set the clicked date
+    setClickedDate(date);
   }, []);
 
-  const sendToChatGPT = async (inputText) => {
-    try {
-      const response = await axios.post('YOUR_CHATGPT_API_ENDPOINT', {
-        prompt: inputText,
-        max_tokens: 50, // Adjust as needed
-      });
+  const handlePressCell = useCallback((date) => {
+    // Filter events for the selected date
+    const filteredEvents = events.filter((event) => {
+      const eventDate = new Date(event.start);
+      return eventDate.toDateString() === date.toDateString();
+    });
+    setSelectedDateEvents(filteredEvents);
+  }, [events]);
 
-      return response.data.choices[0].text.trim();
-    } catch (error) {
-      console.error('Error sending request to ChatGPT:', error);
-      return null;
-    }
-  };
+  const addNewEvent = () => {
+    if (newEventTitle.trim() === '') return; // Don't add empty event titles
 
-  const addNewEvent = async () => {
-    const response = await sendToChatGPT(newEventTitle);
+    const startTime = clickedDate; // Use the clicked date as the start time
+    const endTime = new Date(startTime.getTime() + 30 * 60000); // Adding 30 minutes
 
-    if (response) {
-      const [eventDate, eventTime, eventTitle] = response.split(' ');
-      const startTime = new Date(`${eventDate} ${eventTime}`);
-      const endTime = new Date(startTime.getTime() + 30 * 60000); // Adding 30 minutes
+    const newEvent = {
+      title: newEventTitle,
+      start: startTime,
+      end: endTime,
+    };
 
-      const newEvent = {
-        title: eventTitle,
-        start: startTime,
-        end: endTime,
-      };
-
-      setEvents((currentEvents) => [...currentEvents, newEvent]);
-    }
+    setEvents((currentEvents) => [...currentEvents, newEvent]);
 
     // Reset and close modal
     setNewEventTitle('');
     setModalVisible(false);
+    setClickedDate(null); // Reset clicked date
   };
 
   return (
     <View style={styles.container}>
+      <View style={styles.calendarContainer}>
+        <View style={styles.monthYearContainer}>
+          <Text style={styles.monthYearText}>{formatMonthYear(activeDate)}</Text>
+        </View>
+        <CalendarWrapper
+          key={`calendar-${key}`} // Use a dynamic key
+          events={events}
+          activeDate={activeDate}
+          onSwipeEnd={handleSwipeEnd}
+          onLongPressCell={handleLongPressCell}
+          onPressCell={handlePressCell} // Added onPressDateHeader callback
+        />
+      </View>
+      <View style={styles.eventListContainer}>
+        <Text style={styles.eventListTitle}>Events for Selected Date</Text>
+        {selectedDateEvents.map((event, index) => (
+          <Text key={index} style={styles.eventListItem}>
+            {event.title}
+          </Text>
+        ))}
+      </View>
+      <View style={styles.buttonContainer}>
+        <Button title="Jump to Current Month" onPress={handleJumpToCurrentMonth} />
+      </View>
       <Modal
         animationType="slide"
         transparent={true}
@@ -130,35 +153,22 @@ const MyCalendar = () => {
               style={styles.input}
               onChangeText={setNewEventTitle}
               value={newEventTitle}
-              placeholder="Event Description"
+              placeholder="Enter Event Title"
             />
             <Button title="Add Event" onPress={addNewEvent} />
           </View>
         </View>
       </Modal>
-      <View style={styles.monthYearContainer}>
-        <Text style={styles.monthYearText}>{formatMonthYear(activeDate)}</Text>
-      </View>
-      <CalendarWrapper
-        key={`calendar-${key}`} // Use a dynamic key
-        events={events}
-        activeDate={activeDate}
-        onSwipeEnd={handleSwipeEnd}
-        onPressCell={handlePressCell}
-      />
-      <View style={styles.buttonContainer}>
-        <Button title="Jump to Current Month" onPress={handleJumpToCurrentMonth} />
-      </View>
-
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    // flexDirection: 'column',
     backgroundColor: '#fff',
     paddingTop: 40,
-    height: '90%',
   },
   centeredView: {
     flex: 1,
@@ -188,6 +198,9 @@ const styles = StyleSheet.create({
     padding: 10,
     width: '80%',
   },
+  calendarContainer: {
+    flex: 1,
+  },
   monthYearContainer: {
     alignItems: 'center',
     marginTop: 10,
@@ -197,8 +210,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonContainer: {
-    marginTop: 0,
     paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  eventListContainer: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  eventListTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  eventListItem: {
+    fontSize: 14,
+    marginBottom: 5,
   },
 });
 
