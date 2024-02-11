@@ -25,10 +25,10 @@ const CalendarWrapper = ({ events, onSwipeEnd, onLongPressCell, onPressCell }) =
         onSwipeEnd={onSwipeEnd}
         onLongPressCell={onLongPressCell}
         onPressCell={onPressCell} // Added onPressDateHeader callback
-        height={900}
+        height={600}
         renderEvent={(event, touchableOpacityProps) => (
           <TouchableOpacity {...touchableOpacityProps}>
-            <Text style={{ fontSize: 10, color: 'red' }}>{event.title}</Text>
+            <Text style={{ fontSize: 10, color: 'white' }}>{event.title}</Text>
           </TouchableOpacity>
         )}
         headerContentStyle={{ backgroundColor: 'yellow' }}
@@ -164,68 +164,72 @@ const MyCalendar = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    // flexDirection: 'column',
-    backgroundColor: '#fff',
-    paddingTop: 40,
-  },
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
+    container: {
+      flex: 1,
+      backgroundColor: '#fff',
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  input: {
-    height: 40,
-    margin: 12,
-    borderWidth: 1,
-    padding: 10,
-    width: '80%',
-  },
-  calendarContainer: {
-    flex: 1,
-  },
-  monthYearContainer: {
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  monthYearText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  buttonContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  eventListContainer: {
-    marginTop: 20,
-    paddingHorizontal: 20,
-  },
-  eventListTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  eventListItem: {
-    fontSize: 14,
-    marginBottom: 5,
-  },
-});
+    calendarContainer: {
+      flex: 1,
+      paddingTop: 40,
+      paddingBottom: 10, // Add padding at the bottom of the calendar
+    },
+    monthYearContainer: {
+      padding: 10,
+      alignItems: 'center',
+    },
+    monthYearText: {
+      fontSize: 20,
+    },
+    eventListContainer: {
+      padding: 10,
+      borderTopWidth: 1, // Add a border at the top of the event list
+      borderTopColor: '#ccc', // Border color for clarity
+    },
+    eventListTitle: {
+      fontSize: 20,
+      marginBottom: 10,
+    },
+    eventListItem: {
+      fontSize: 16,
+      marginBottom: 5,
+    },
+    buttonContainer: {
+      padding: 10,
+    },
+    centeredView: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 22,
+    },
+    modalView: {
+      margin: 20,
+      backgroundColor: 'white',
+      borderRadius: 20,
+      padding: 35,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    input: {
+      height: 40,
+      margin: 12,
+      borderWidth: 1,
+      padding: 10,
+    },
+  });
+  
+  
+  
+  
+  
+  
+  
 
 export default MyCalendar;
