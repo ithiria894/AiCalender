@@ -1,53 +1,21 @@
-// Event.tsx
-
 import React, { useState } from 'react';
 import { Modal, View, Text, Button, StyleSheet, TextInput } from 'react-native';
-import DateTimePickerModal from "react-native-modal-datetime-picker";
-
 
 const Event = ({ onSave }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [startTime, setStartTime] = useState(new Date());
-  const [endTime, setEndTime] = useState(new Date());
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [repeating, setRepeating] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
-  const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
-
-  const showStartDatePicker = () => {
-    setStartDatePickerVisible(true);
-  };
-
-  const hideStartDatePicker = () => {
-    setStartDatePickerVisible(false);
-  };
-
-  const handleStartDateConfirm = (date) => {
-    setStartTime(date);
-    hideStartDatePicker();
-  };
-
-  const showEndDatePicker = () => {
-    setEndDatePickerVisible(true);
-  };
-
-  const hideEndDatePicker = () => {
-    setEndDatePickerVisible(false);
-  };
-
-  const handleEndDateConfirm = (date) => {
-    setEndTime(date);
-    hideEndDatePicker();
-  };
 
   const handleSubmit = () => {
     onSave({ title, description, startTime, endTime, repeating });
     setModalVisible(false);
     setTitle('');
     setDescription('');
-    setStartTime(new Date());
-    setEndTime(new Date());
+    setStartTime('');
+    setEndTime('');
     setRepeating(false);
   };
 
@@ -76,20 +44,16 @@ const Event = ({ onSave }) => {
               value={description}
             />
             <Text>Start Time:</Text>
-            <Button title="Select Start Date" onPress={showStartDatePicker} />
-            <DateTimePickerModal
-              isVisible={isStartDatePickerVisible}
-              mode="datetime"
-              onConfirm={handleStartDateConfirm}
-              onCancel={hideStartDatePicker}
+            <input
+              type="datetime-local"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
             />
             <Text>End Time:</Text>
-            <Button title="Select End Date" onPress={showEndDatePicker} />
-            <DateTimePickerModal
-              isVisible={isEndDatePickerVisible}
-              mode="datetime"
-              onConfirm={handleEndDateConfirm}
-              onCancel={hideEndDatePicker}
+            <input
+              type="datetime-local"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
             />
             <View style={styles.checkboxContainer}>
               <Text>Repeating:</Text>
