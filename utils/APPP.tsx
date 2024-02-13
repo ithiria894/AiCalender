@@ -21,15 +21,12 @@ const initialEvents = [
 const MyCalendar = () => {
   const [events, setEvents] = useState(initialEvents);
   const [activeDate, setActiveDate] = useState(new Date());
+  const [key, setKey] = useState(0); // Use a key to force re-render
   const [modalVisible, setModalVisible] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [selectedDateEvents, setSelectedDateEvents] = useState([]);
   const [clickedDate, setClickedDate] = useState(null); // New state to store clicked date
   const [calendarHeight, setCalendarHeight] = useState(300); // Initial height
-  const [key, setKey] = useState(0);
-  const [todoList, setTodoList] = useState([]);
-
-  
 
   const formatMonthYear = useCallback((date) => {
     const options = { year: 'numeric', month: 'long' };
@@ -41,28 +38,9 @@ const MyCalendar = () => {
   }, []);
 
   const handleJumpToCurrentMonth = useCallback(() => {
-    ///
-    const previousMonth = new Date(activeDate);
-    previousMonth.setMonth(previousMonth.getMonth() - 1);
-    setActiveDate(previousMonth);
-    ///
-    // setActiveDate(new Date()); 
-    setKey((prevKey) => prevKey + 1);// Set to the current date
+    setActiveDate(new Date()); // Set to the current date
+    setKey((prevKey) => prevKey + 1); // Increment the key to force rerender
   }, []);
-
-  const handlePreviousMonth = useCallback(() => {
-    const previousMonth = new Date(activeDate);
-    previousMonth.setMonth(previousMonth.getMonth() - 1);
-    setActiveDate(previousMonth);
-    setKey((prevKey) => prevKey + 1);
-  }, [activeDate]);
-
-  const handleNextMonth = useCallback(() => {
-    const nextMonth = new Date(activeDate);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    setActiveDate(nextMonth);
-    setKey((prevKey) => prevKey + 1);
-  }, [activeDate]);
 
   const handleLongPressCell = useCallback((date) => {
     // Open modal for new event details
@@ -108,16 +86,16 @@ const MyCalendar = () => {
         <View style={styles.monthYearContainer}>
           <Text style={styles.monthYearText}>{formatMonthYear(activeDate)}</Text>
         </View>
-        <CalendarWrapper
-          keyProp={`calendar-${key}`}
-          events={events}
-          onSwipeEnd={handleSwipeEnd}
-          onLongPressCell={handleLongPressCell}
-          onPressCell={handlePressCell}
-          activeDate={activeDate} // Pass activeDate to CalendarWrapper
-        />
+        {/* <ScrollView style={styles.calendarWrapperScroll}> */}
+          <CalendarWrapper
+            keyProp={`calendar-${key}`}
+            events={events}
+            onSwipeEnd={handleSwipeEnd}
+            onLongPressCell={handleLongPressCell}
+            onPressCell={handlePressCell}
+          />
+        {/* </ScrollView> */}
       </View>
-      <View style={styles.BothListContainer}>
       <View style={styles.eventListContainer}>
         <Text style={styles.eventListTitle}>Selected Date: {clickedDate ? clickedDate.toDateString() : ''}</Text>
         {selectedDateEvents.map((event, index) => (
@@ -126,21 +104,7 @@ const MyCalendar = () => {
           </Text>
         ))}
       </View>
-      {/* //make a new todo list container here/ */}
-      <View style={styles.todoListContainer}>
-        <Text style={styles.eventListTitle}>To Do List</Text>
-        <ScrollView>
-        {selectedDateEvents.map((todoList, index) => (
-          <Text key={index} style={styles.eventListItem}>
-            {todoList.title}
-          </Text>
-        ))}
-        </ScrollView>
-      </View>
-      </View>
       <View style={styles.buttonContainer}>
-        <Button title="Previous Month" onPress={handlePreviousMonth} />
-        <Button title="Next Month" onPress={handleNextMonth} />
         <Button title="Jump to Current Month" onPress={handleJumpToCurrentMonth} />
       </View>
       <Modal
@@ -167,3 +131,57 @@ const MyCalendar = () => {
 };
 
 export default MyCalendar;
+// CalendarWrapper.tsx
+import React from 'react';
+import { View, TouchableOpacity, Text } from 'react-native';
+import { Calendar } from 'react-native-big-calendar';
+// import {Calendar} from '../lib/react-native-big-calendar/src/components/Calendar';
+
+const CalendarWrapper = ({ events, onSwipeEnd, onLongPressCell, onPressCell, keyProp }) => {
+  return (
+    <View key={keyProp}>
+      <Calendar
+        events={events}
+        onSwipeEnd={onSwipeEnd}
+        onLongPressCell={onLongPressCell}
+        onPressCell={onPressCell}
+        height={600}
+        renderEvent={(event, touchableOpacityProps) => (
+          <TouchableOpacity {...touchableOpacityProps}>
+            <Text style={{ fontSize: 10, color: 'white' }}>{event.title}</Text>
+          </TouchableOpacity>
+        )}
+        headerContentStyle={{ backgroundColor: 'yellow' }}
+        mode="month"
+        locale="en"
+        showTime={true}
+        weekStartsOn={0}
+        weekEndsOn={6}
+        ampm={true}
+        scrollOffsetMinutes={200}
+        swipeEnabled={true}
+        showAdjacentMonths={true}
+        sortedMonthView={true}
+        overlapOffset={20}
+        moreLabel="More"
+        showVerticalScrollIndicator={true}
+        eventMinHeightForMonthView={5}
+        eventCellStyle={(event) => ({
+          backgroundColor: event.title === 'Meeting' ? 'green' : 'blue',
+          borderRadius: 5,
+          padding: 1,
+          marginVertical: 0, // Adjust the vertical margin between event cells
+          marginHorizontal: 0,
+        })}
+        // eventSpacing 
+      />
+    </View>
+  );
+};
+
+export default CalendarWrapper;
+
+
+// NOW THE ABOVE CODE IS SWITCHING MONTH BY SWIPE, NOW I WANT TO ADD 2 BUTTON TO THE BOTTOM OF THE CALENDERCONTAINER, TO 替代the swipe, switching months back and forth.
+// u should notice that the calenderwrapper should be updated by keyprop everytime switching the month so it can render new month content.
+// also the monthyearcontainer should be updated accordingly.
