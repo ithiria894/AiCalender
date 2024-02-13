@@ -1,169 +1,148 @@
-import React, { useState, useCallback } from 'react';
-import { Modal, View, Text, Button, TextInput, ScrollView } from 'react-native';
-import { styles } from './styles';
-import CalendarWrapper from './components/CalendarWrapper';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
+import Event from './components/Event'; // Import the Event component
 
-// Initial events data
-const initialEvents = [
-  {
-    title: 'Meeting',
-    start: new Date(2024, 1, 12, 10, 0),
-    end: new Date(2024, 1, 12, 10, 30),
-    summary: '3412 Piedmont Rd NE, GA 3035',
-  },
-  {
-    title: 'Coffee break',
-    start: new Date(2024,1, 12, 15, 45),
-    end: new Date(2024, 1, 12, 16, 30),
-  },
-];
+const generateMonthGrid = (year, month) => {
+  const startDate = startOfMonth(new Date(year, month - 1)); // Month is 0-based in JavaScript Date
+  const endDate = endOfMonth(startDate);
+  const startWeek = startOfWeek(startDate);
+  const endWeek = endOfWeek(endDate);
 
-const MyCalendar = () => {
-  const [events, setEvents] = useState(initialEvents);
-  const [activeDate, setActiveDate] = useState(new Date());
-  const [modalVisible, setModalVisible] = useState(false);
-  const [newEventTitle, setNewEventTitle] = useState('');
-  const [selectedDateEvents, setSelectedDateEvents] = useState([]);
-  const [clickedDate, setClickedDate] = useState(null); // New state to store clicked date
-  const [calendarHeight, setCalendarHeight] = useState(300); // Initial height
-  const [key, setKey] = useState(0);
-  const [todoList, setTodoList] = useState([]);
+  const days = eachDayOfInterval({ start: startWeek, end: endWeek });
+  const monthGrid = [];
+  let week = [];
 
-  
+  days.forEach((day, index) => {
+    week.push(day);
 
-  const formatMonthYear = useCallback((date) => {
-    const options = { year: 'numeric', month: 'long' };
-    return date.toLocaleDateString('en-US', options);
+    if ((index + 1) % 7 === 0 || index === days.length - 1) {
+      monthGrid.push(week);
+      week = [];
+    }
+  });
+
+  return monthGrid;
+}
+
+const App = () => {
+  const [monthGrid, setMonthGrid] = useState([]);
+  const [month, setMonth] = useState('');
+  const [year, setYear] = useState('');
+  const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    // Example usage
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // Month is 0-based in JavaScript Date
+    setYear(currentYear);
+    setMonth(currentMonth);
+    const generatedMonthGrid = generateMonthGrid(currentYear, currentMonth);
+    setMonthGrid(generatedMonthGrid);
   }, []);
 
-  const handleSwipeEnd = useCallback((date) => {
-    setActiveDate(date);
-  }, []);
+  const handleMonthChange = (newMonth) => {
+    setMonth(newMonth);
+    const generatedMonthGrid = generateMonthGrid(year, newMonth);
+    setMonthGrid(generatedMonthGrid);
+  };
 
-  const handleJumpToCurrentMonth = useCallback(() => {
-    ///
-    const previousMonth = new Date(activeDate);
-    previousMonth.setMonth(previousMonth.getMonth() - 1);
-    setActiveDate(previousMonth);
-    ///
-    // setActiveDate(new Date()); 
-    setKey((prevKey) => prevKey + 1);// Set to the current date
-  }, []);
+  const handleYearChange = (newYear) => {
+    setYear(newYear);
+    const generatedMonthGrid = generateMonthGrid(newYear, month);
+    setMonthGrid(generatedMonthGrid);
+  };
 
-  const handlePreviousMonth = useCallback(() => {
-    const previousMonth = new Date(activeDate);
-    previousMonth.setMonth(previousMonth.getMonth() - 1);
-    setActiveDate(previousMonth);
-    setKey((prevKey) => prevKey + 1);
-  }, [activeDate]);
-
-  const handleNextMonth = useCallback(() => {
-    const nextMonth = new Date(activeDate);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    setActiveDate(nextMonth);
-    setKey((prevKey) => prevKey + 1);
-  }, [activeDate]);
-
-  const handleLongPressCell = useCallback((date) => {
-    // Open modal for new event details
-    setModalVisible(true);
-    // Set the clicked date
-    setClickedDate(date);
-  }, []);
-
-  const handlePressCell = useCallback((date) => {
-    // Filter events for the selected date
-    const filteredEvents = events.filter((event) => {
-      const eventDate = new Date(event.start);
-      return eventDate.toDateString() === date.toDateString();
-    });
-    setSelectedDateEvents(filteredEvents);
-    // Update clickedDate to the selected date
-    setClickedDate(date);
-  }, [events]);
-
-  const addNewEvent = () => {
-    if (newEventTitle.trim() === '') return; // Don't add empty event titles
-
-    const startTime = clickedDate; // Use the clicked date as the start time
-    const endTime = new Date(startTime.getTime() + 30 * 60000); // Adding 30 minutes
-
-    const newEvent = {
-      title: newEventTitle,
-      start: startTime,
-      end: endTime,
-    };
-
-    setEvents((currentEvents) => [...currentEvents, newEvent]);
-
-    // Reset and close modal
-    setNewEventTitle('');
-    setModalVisible(false);
-    setClickedDate(null); // Reset clicked date
+  const handleSaveEvent = (newEvent) => {
+    setEvents([...events, newEvent]);
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.calendarContainer}>
-        <View style={styles.monthYearContainer}>
-          <Text style={styles.monthYearText}>{formatMonthYear(activeDate)}</Text>
+      <Text style={styles.monthYear}>{`${format(new Date(year, month - 1), 'MMMM yyyy')}`}</Text>
+      {monthGrid.map((week, index) => (
+        <View key={index} style={styles.weekContainer}>
+          {week.map((day, dayIndex) => (
+            <View key={dayIndex} style={styles.dayContainer}>
+              <Text style={styles.dayNumber}>{day.getDate().toString()}</Text>
+              {events.map((event, eventIndex) => {
+                const eventDate = new Date(event.startTime);
+                if (
+                  eventDate.getFullYear() === year &&
+                  eventDate.getMonth() + 1 === month &&
+                  eventDate.getDate() === day.getDate()
+                ) {
+                  return (
+                    <TouchableOpacity
+                      key={eventIndex}
+                      onPress={() => console.log('Edit event:', event)}
+                      style={styles.eventContainer}
+                    >
+                      <Text style={styles.eventTitle}>{event.title}</Text>
+                    </TouchableOpacity>
+                  );
+                }
+              })}
+            </View>
+          ))}
         </View>
-        <CalendarWrapper
-          keyProp={`calendar-${key}`}
-          events={events}
-          onSwipeEnd={handleSwipeEnd}
-          onLongPressCell={handleLongPressCell}
-          onPressCell={handlePressCell}
-          activeDate={activeDate} // Pass activeDate to CalendarWrapper
-        />
-      </View>
-      <View style={styles.BothListContainer}>
-      <View style={styles.eventListContainer}>
-        <Text style={styles.eventListTitle}>Selected Date: {clickedDate ? clickedDate.toDateString() : ''}</Text>
-        {selectedDateEvents.map((event, index) => (
-          <Text key={index} style={styles.eventListItem}>
-            {event.title}
-          </Text>
-        ))}
-      </View>
-      {/* //make a new todo list container here/ */}
-      <View style={styles.todoListContainer}>
-        <Text style={styles.eventListTitle}>To Do List</Text>
-        <ScrollView>
-        {selectedDateEvents.map((todoList, index) => (
-          <Text key={index} style={styles.eventListItem}>
-            {todoList.title}
-          </Text>
-        ))}
-        </ScrollView>
-      </View>
-      </View>
+      ))}
       <View style={styles.buttonContainer}>
-        <Button title="Previous Month" onPress={handlePreviousMonth} />
-        <Button title="Next Month" onPress={handleNextMonth} />
-        <Button title="Jump to Current Month" onPress={handleJumpToCurrentMonth} />
+        <TouchableOpacity style={styles.prevButton} onPress={() => handleMonthChange(month - 1)}><Text>Prev Month</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.nextButton} onPress={() => handleMonthChange(month + 1)}><Text>Next Month</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.prevButton} onPress={() => handleYearChange(year - 1)}><Text>Prev Year</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.nextButton} onPress={() => handleYearChange(year + 1)}><Text>Next Year</Text></TouchableOpacity>
       </View>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}>
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <TextInput
-              style={styles.input}
-              onChangeText={setNewEventTitle}
-              value={newEventTitle}
-              placeholder="Enter Event Title"
-            />
-            <Button title="Add Event" onPress={addNewEvent} />
-          </View>
-        </View>
-      </Modal>
+      <Event onSave={handleSaveEvent} /> {/* Add the Event component here */}
     </View>
   );
-};
+}
 
-export default MyCalendar;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  monthYear: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  weekContainer: {
+    flexDirection: 'row',
+  },
+  dayContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'black',
+  },
+  dayNumber: {
+    fontSize: 10, // Adjust the font size as needed
+  },
+  eventContainer: {
+    marginTop: 5,
+    paddingVertical: 2,
+    paddingHorizontal: 5,
+    backgroundColor: 'lightblue',
+    borderRadius: 5,
+  },
+  eventTitle: {
+    fontSize: 12,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    marginTop: 10,
+  },
+  prevButton: {
+    marginHorizontal: 5,
+  },
+  nextButton: {
+    marginHorizontal: 5,
+  },
+});
+
+export default App;
