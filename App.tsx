@@ -1,10 +1,8 @@
-// App.tsx
-
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Modal, TextInput, Button } from 'react-native';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
-import Event from './components/Event';
-
+// import { styles } from './styles';
+import styles from "./styles"
 const App = () => {
   const [monthGrid, setMonthGrid] = useState([]);
   const [month, setMonth] = useState('');
@@ -13,6 +11,11 @@ const App = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width);
   const [modalVisible, setModalVisible] = useState(false);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [repeating, setRepeating] = useState(false);
 
   useEffect(() => {
     const currentYear = new Date().getFullYear();
@@ -66,12 +69,32 @@ const App = () => {
     setMonthGrid(generatedMonthGrid);
   };
 
-  const handleSaveEvent = (newEvent) => {
-    setEvents([...events, newEvent]);
+  const handleSaveEvent = () => {
+    const newEvent = { title, description, startTime, endTime, repeating };
+    if (selectedEvent) {
+      const updatedEvents = events.map(event =>
+        event === selectedEvent ? { ...event, ...newEvent } : event
+      );
+      setEvents(updatedEvents);
+      setSelectedEvent(null);
+    } else {
+      setEvents([...events, newEvent]);
+    }
+    setModalVisible(false);
+    setTitle('');
+    setDescription('');
+    setStartTime('');
+    setEndTime('');
+    setRepeating(false);
   };
 
   const handleEventPress = (event) => {
     setSelectedEvent(event);
+    setTitle(event.title);
+    setDescription(event.description);
+    setStartTime(event.startTime);
+    setEndTime(event.endTime);
+    setRepeating(event.repeating);
     setModalVisible(true); // Show the modal
   };
 
@@ -141,55 +164,81 @@ const App = () => {
             <Text>Next Year</Text>
           </TouchableOpacity>
         </View>
-        <Event onSave={handleSaveEvent} selectedEvent={selectedEvent} visible={modalVisible} setVisible={setModalVisible} />
+        <View style={styles.eventListContainer}>
+  <Text style={styles.eventListHeader}>Events</Text>
+  {events.map((event, index) => (
+    <TouchableOpacity
+      key={index}
+      style={styles.eventListItem}
+      onPress={() => handleEventPress(event)}
+    >
+      <Text style={styles.eventListItemText}>{event.title}</Text>
+      <Text style={styles.eventListItemText}>Description: {event.description}</Text>
+      <Text style={styles.eventListItemText}>Start Time: {event.startTime}</Text>
+      <Text style={styles.eventListItemText}>End Time: {event.endTime}</Text>
+      <Text style={styles.eventListItemText}>Repeating: {event.repeating ? 'Yes' : 'No'}</Text>
+    </TouchableOpacity>
+  ))}
+</View>
+        <View style={styles.eventModalContainer}>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => {
+              setModalVisible(false);
+            }}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text>Title:</Text>
+                <TextInput
+                  style={styles.input}
+                  onChangeText={setTitle}
+                  value={title}
+                />
+                <Text>Description:</Text>
+                <TextInput
+                  style={styles.input}
+                  onChangeText={setDescription}
+                  value={description}
+                />
+                <Text>Start Time:</Text>
+                <input
+              type="datetime-local"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+            />
+                <Text>End Time:</Text>
+                <input
+              type="datetime-local"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+            />
+                <View style={styles.checkboxContainer}>
+                  <Text>Repeating:</Text>
+                  <Button
+                    title={repeating ? 'Yes' : 'No'}
+                    onPress={() => setRepeating(!repeating)}
+                  />
+                </View>
+                <Button title="Save" onPress={handleSaveEvent} />
+              </View>
+            </View>
+          </Modal>
+          <Button
+            title="Add Event"
+            onPress={() => {
+              setSelectedEvent(null);
+              setModalVisible(true);
+            }}
+          />
+        </View>
       </View>
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  monthYear: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  weekContainer: {
-    flexDirection: 'row',
-  },
-  dayContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'black',
-  },
-  dayNumber: {
-    fontSize: 10,
-  },
-  eventContainer: {
-    marginTop: 2,
-    paddingVertical: 2,
-    paddingHorizontal: 5,
-    backgroundColor: 'lightblue',
-    borderRadius: 5,
-  },
-  eventTitle: {
-    fontSize: 12,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    marginTop: 10,
-  },
-  prevButton: {
-    marginHorizontal: 5,
-  },
-  nextButton: {
-    marginHorizontal: 5,
-  },
-});
+
 
 export default App;
