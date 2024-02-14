@@ -1,22 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Modal, TextInput, Button } from 'react-native';
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, set } from 'date-fns';
-import styles from './styles';
-// import styles from "./styles"
-import EventComponent from './EventComponent';
-import TodoListComponent from './TodoListComponent';
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
+// import { styles } from './styles';
+import styles from "./styles"
 const App = () => {
   const [monthGrid, setMonthGrid] = useState([]);
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
   const [events, setEvents] = useState([]);
-  const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width);
-  const [todos, setTodos] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedTodo, setSelectedTodo] = useState(null);
-  const [modalVisibleTodo, setModalVisibleTodo] = useState(false);
-  const [event, setEvent] = useState(null);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [repeating, setRepeating] = useState(false);
 
   useEffect(() => {
     const currentYear = new Date().getFullYear();
@@ -70,6 +69,46 @@ const App = () => {
     setMonthGrid(generatedMonthGrid);
   };
 
+  const handleSaveEvent = () => {
+    const newEvent = { title, description, startTime, endTime, repeating };
+    console.log(newEvent);
+    if (selectedEvent) {
+      const updatedEvents = events.map(event =>
+        event === selectedEvent ? { ...event, ...newEvent } : event
+      );
+      setEvents(updatedEvents);
+      setSelectedEvent(null);
+    } else {
+      setEvents([...events, newEvent]);
+    }
+    setModalVisible(false);
+    setTitle('');
+    setDescription('');
+    setStartTime('');
+    setEndTime('');
+    setRepeating(false);
+  };
+
+  const handleDeleteEvent = () => {
+    const updatedEvents = events.filter(event => event !== selectedEvent);
+    setEvents(updatedEvents);
+    setModalVisible(false);
+    setTitle('');
+    setDescription('');
+    setStartTime('');
+    setEndTime('');
+    setRepeating(false);
+  }
+
+  const handleEventPress = (event) => {
+    setSelectedEvent(event);
+    setTitle(event.title);
+    setDescription(event.description);
+    setStartTime(event.startTime);
+    setEndTime(event.endTime);
+    setRepeating(event.repeating);
+    setModalVisible(true); // Show the modal
+  };
 
   const getRowHeight = (week) => {
     let maxHeight = 100; // Default height
@@ -90,25 +129,6 @@ const App = () => {
 
   const cellWidth = containerWidth / 7;
 
-  const handleAddEvent = () => {
-    console.log('Add Event pressed');
-    setSelectedEvent(null);
-    setModalVisible(true);
-  };
-  // const handleEventPress = (event) => {
-  //   setSelectedEvent(event);
-  //   setModalVisible(true);
-  // };
-
-  const handleAddTodo = () => {
-    console.log('Add Todo pressed');
-    setSelectedTodo(null);
-    setModalVisibleTodo(true);
-  }
-  // const handleTodoPress = (todo) => {
-  //   setSelectedTodo(todo);
-  //   setModalVisibleTodo(true);
-  // }
   return (
     <ScrollView horizontal={true}>
       <View style={[styles.container, { width: containerWidth }]}>
@@ -128,21 +148,13 @@ const App = () => {
                     eventDate.getDate() === day.getDate()
                   ) {
                     return (
-                      // <TouchableOpacity
-                      //   key={eventIndex}
-                      //   style={styles.eventContainer}
-                      //   onPress={() => handleEventPress(event)}
-                      // >
-                      //   <Text style={styles.eventTitle}>{event.title}</Text>
-                      // </TouchableOpacity>
-                      <EventComponent
-                        events={events}
-                        setEvents={setEvents}
-                        event={event}
-                        // setEvent={setEvent}
+                      <TouchableOpacity
                         key={eventIndex}
-                        showEvent={true}
-                      />
+                        style={styles.eventContainer}
+                        onPress={() => handleEventPress(event)}
+                      >
+                        <Text style={styles.eventTitle}>{event.title}</Text>
+                      </TouchableOpacity>
                     );
                   }
                 })}
@@ -164,42 +176,79 @@ const App = () => {
             <Text>Next Year</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.eventListandTodoListContainer}>
-          <EventComponent
-            events={events}
-            setEvents={setEvents}
-            showEventList={true}
-          />
-          {/* <TodoListComponent
-            todos={todos}
-            setTodos={setTodos}
-            setSelectedTodo={setSelectedTodo}
-            selectedTodo={selectedTodo}
-            setModalVisibleTodo={setModalVisibleTodo} 
-            modalVisibleTodo={modalVisibleTodo}
-            /> */}
-
+        <View style={styles.eventListContainer}>
+          <Text style={styles.eventListHeader}>Events</Text>
+          {events.map((event, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.eventListItem}
+              onPress={() => handleEventPress(event)}
+            >
+              <Text style={styles.eventListItemText}>{event.title}</Text>
+              <Text style={styles.eventListItemText}>Description: {event.description}</Text>
+              <Text style={styles.eventListItemText}>Start Time: {event.startTime}</Text>
+              <Text style={styles.eventListItemText}>End Time: {event.endTime}</Text>
+              <Text style={styles.eventListItemText}>Repeating: {event.repeating ? 'Yes' : 'No'}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
-        <View style={styles.buttonContainer}>
-          {/* <Button
+        <View style={styles.eventModalContainer}>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => {
+              setModalVisible(false);
+            }}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text>Title:</Text>
+                <TextInput
+                  style={styles.input}
+                  onChangeText={setTitle}
+                  value={title}
+                />
+                <Text>Description:</Text>
+                <TextInput
+                  style={styles.input}
+                  onChangeText={setDescription}
+                  value={description}
+                />
+                <Text>Start Time:</Text>
+                <input
+                  type="datetime-local"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                />
+                <Text>End Time:</Text>
+                <input
+                  type="datetime-local"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                />
+                <View style={styles.checkboxContainer}>
+                  <Text>Repeating:</Text>
+                  <Button
+                    title={repeating ? 'Yes' : 'No'}
+                    onPress={() => setRepeating(!repeating)}
+                  />
+                </View>
+                <View style={styles.modalButtonContainer}>
+                  <Button title="Save" onPress={handleSaveEvent} />
+                  <Button title="Delete" onPress={handleDeleteEvent} />
+                </View>
+              </View>
+            </View>
+          </Modal>
+          <Button
             title="Add Event"
-            onPress={handleAddEvent}
-          /> */}
-          {/* <TouchableOpacity onPress={handleAddEvent} style={styles.someButtonStyle}>
-  <Text>Add Event</Text>
-</TouchableOpacity> */}
-
-          {/* <Button
-            title="Add Todo"
-            onPress={handleAddTodo}
-          /> */}
-          <EventComponent
-            events={events}
-            setEvents={setEvents}
-            showAddButton={true} // Or dynamically determine this value based on conditions
+            onPress={() => {
+              setSelectedEvent(null);
+              setModalVisible(true);
+            }}
           />
         </View>
-
       </View>
     </ScrollView>
   );

@@ -1,68 +1,24 @@
-import React, { useState } from 'react';
-import { Modal, View, Text, Button, StyleSheet, TextInput } from 'react-native';
+import React from 'react';
+import { Modal, View, TextInput, Button, Text, StyleSheet } from 'react-native';
 
-const EventModal = ({ onSave, visible, setVisible }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [repeating, setRepeating] = useState(false);
-
-  const handleSubmit = () => {
-    onSave({ title, description, startTime, endTime, repeating });
-    setVisible(false);
-    setTitle('');
-    setDescription('');
-    setStartTime('');
-    setEndTime('');
-    setRepeating(false);
-  };
-
-
-
+const EventModal = ({ modalVisible, setModalVisible, title, setTitle, description, setDescription, startTime, setStartTime, endTime, setEndTime, repeating, setRepeating, handleSaveEvent }) => {
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={() => {
-        setVisible(false);
-      }}
-    >
+    <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text>Title:</Text>
-          <TextInput
-            style={styles.input}
-            onChangeText={setTitle}
-            value={title}
-          />
+          <TextInput style={styles.input} onChangeText={setTitle} value={title} />
           <Text>Description:</Text>
-          <TextInput
-            style={styles.input}
-            onChangeText={setDescription}
-            value={description}
-          />
+          <TextInput style={styles.input} onChangeText={setDescription} value={description} />
           <Text>Start Time:</Text>
-          <input
-              type="datetime-local"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-            />
+          <TextInput style={styles.input} onChangeText={setStartTime} value={startTime} />
           <Text>End Time:</Text>
-          <input
-              type="datetime-local"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-            />
+          <TextInput style={styles.input} onChangeText={setEndTime} value={endTime} />
           <View style={styles.checkboxContainer}>
             <Text>Repeating:</Text>
-            <Button
-              title={repeating ? 'Yes' : 'No'}
-              onPress={() => setRepeating(!repeating)}
-            />
+            <Button title={repeating ? 'Yes' : 'No'} onPress={() => setRepeating(!repeating)} />
           </View>
-          <Button title="Save" onPress={handleSubmit} />
+          <Button title="Save" onPress={handleSaveEvent} />
         </View>
       </View>
     </Modal>
@@ -74,19 +30,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
     elevation: 5,
   },
   input: {
     borderWidth: 1,
-    borderColor: 'gray',
-    marginBottom: 10,
+    borderColor: '#ccc',
+    borderRadius: 5,
     padding: 5,
+    marginBottom: 10,
   },
   checkboxContainer: {
     flexDirection: 'row',
