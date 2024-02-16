@@ -14,6 +14,9 @@ const styles = StyleSheet.create({
   weekContainer: {
     flexDirection: 'row',
   },
+  dayOpacityContainer: {
+    flex: 1,
+  },
   dayContainer: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -22,7 +25,12 @@ const styles = StyleSheet.create({
   },
   dayNumber: {
     fontSize: 10,
+    padding: 2, // Add padding to ensure text is centrally aligned and has space around it
+    backgroundColor: 'transparent', // Ensure the background doesn't obscure the border
+    // Other styling adjustments as needed
+    borderWidth: 0,
   },
+  
   eventContainer: {
     marginTop: 2,
     paddingVertical: 2,

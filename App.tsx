@@ -5,6 +5,9 @@ import styles from './styles';
 // import styles from "./styles"
 import EventComponent from './EventComponent';
 import TodoListComponent from './TodoListComponent';
+
+
+
 const App = () => {
   const [monthGrid, setMonthGrid] = useState([]);
   const [month, setMonth] = useState('');
@@ -17,6 +20,9 @@ const App = () => {
   const [selectedTodo, setSelectedTodo] = useState(null);
   const [modalVisibleTodo, setModalVisibleTodo] = useState(false);
   const [event, setEvent] = useState(null);
+  const today = new Date().toISOString().split('T')[0];
+  const [selectedDate, setSelectedDate] = useState(today);
+
 
   useEffect(() => {
     const currentYear = new Date().getFullYear();
@@ -109,14 +115,35 @@ const App = () => {
   //   setSelectedTodo(todo);
   //   setModalVisibleTodo(true);
   // }
+
+  const handleCellClick = (date: Date) => {
+    let localDateString = format(date, 'yyyy-MM-dd'); // Formats date to 'YYYY-MM-DD' based on the local time zone
+    console.log("IN-----PARENT------COMPONENT, localDateString:", localDateString);
+    setSelectedDate(localDateString);
+};
+
+// useEffect(() => {
+//   if (selectedDate) {
+//       console.log("In Parent Component, selectedDate:", selectedDate);
+//   }
+// }, [selectedDate]); // This useEffect will run every time `selectedDate` changes.
+
+
+  
   return (
-    <ScrollView horizontal={true}>
+    <ScrollView vertical={true}>
       <View style={[styles.container, { width: containerWidth }]}>
         <Text style={styles.monthYear}>{format(new Date(year, month - 1), 'MMMM yyyy')}</Text>
         {monthGrid.map((week, index) => (
           <View key={index} style={[styles.weekContainer, { width: containerWidth, height: getRowHeight(week) }]}>
             {week.map((day, dayIndex) => (
-              <View key={dayIndex} style={[styles.dayContainer, { width: cellWidth }]}>
+                <TouchableOpacity
+                key={dayIndex}
+                style={[styles.dayOpacityContainer, { width: cellWidth }]}
+                onPress={() => handleCellClick(day)} // Define this function to handle the press action
+              >
+
+              <View key={dayIndex} style={[styles.dayContainer, { width: cellWidth, height: getRowHeight(week) }]}>
                 <Text style={[styles.dayNumber]}>
                   {day.getDate().toString()}
                 </Text>
@@ -142,11 +169,14 @@ const App = () => {
                         // setEvent={setEvent}
                         key={eventIndex}
                         showEvent={true}
+                        selectedDate={selectedDate}
                       />
                     );
                   }
                 })}
+                
               </View>
+              </TouchableOpacity>
             ))}
           </View>
         ))}
@@ -165,10 +195,15 @@ const App = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.eventListandTodoListContainer}>
+
+        
+
+
           <EventComponent
             events={events}
             setEvents={setEvents}
             showEventList={true}
+            selectedDate={selectedDate}
           />
           {/* <TodoListComponent
             todos={todos}
@@ -197,6 +232,7 @@ const App = () => {
             events={events}
             setEvents={setEvents}
             showAddButton={true} // Or dynamically determine this value based on conditions
+            selectedDate={selectedDate}
           />
         </View>
 
