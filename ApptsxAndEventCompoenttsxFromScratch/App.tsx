@@ -131,7 +131,7 @@ const App = () => {
 
   
   return (
-    
+    <ScrollView vertical={true}>
       <View style={[styles.container, { width: containerWidth }]}>
         <Text style={styles.monthYear}>{format(new Date(year, month - 1), 'MMMM yyyy')}</Text>
         {monthGrid.map((week, index) => (
